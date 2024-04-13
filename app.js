@@ -2,7 +2,7 @@ let web3;
 let shrimpFaucetContract;
 let shrimpTokenContract;
 const faucetAddress = '0x1ab0F52CAe9ed91fa95e425C6B8E20b889e28544'; // Update with your faucet contract address
-const tokenAddress = '0x1234567890123456789012345678901234567890'; // Update with your token contract address
+const tokenAddress = '0x4633841377513350FAF72Efc3c6e6f94F3BDD0F8'; // Update with your token contract address
 const faucetABI = [
 	{
 		"inputs": [],
