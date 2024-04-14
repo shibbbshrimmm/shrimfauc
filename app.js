@@ -572,44 +572,62 @@ const tokenABI = [
 
 async function initWeb3() {
     if (window.ethereum) {
+        web3 = new Web3(window.ethereum);
         try {
-            web3 = new Web3(window.ethereum);
-            await window.ethereum.enable(); // Request access
-            shrimpFaucetContract = new web3.eth.Contract(faucetABI, faucetAddress);
-            shrimpTokenContract = new web3.eth.Contract(tokenABI, tokenAddress);
-            console.log("Web3 initialized and contracts connected.");
+            // Check if accounts are already connected
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            if (accounts.length > 0) {
+                console.log("Account already connected:", accounts[0]);
+                setupContracts();
+            } else {
+                // Request account access if not already connected
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                console.log("Account connected:", accounts[0]);
+                setupContracts();
+            }
         } catch (error) {
-            console.error("User denied account access");
+            console.error("Error connecting to MetaMask:", error);
         }
     } else {
         console.error("Non-Ethereum browser detected. You should consider trying MetaMask!");
     }
 }
 
+function setupContracts() {
+    shrimpFaucetContract = new web3.eth.Contract(faucetABI, faucetAddress);
+    shrimpTokenContract = new web3.eth.Contract(tokenABI, tokenAddress);
+    console.log("Contracts initialized.");
+}
+
 async function claimTokens() {
-    const addressInput = document.getElementById("addressInput").value;
-    if (!web3.utils.isAddress(addressInput)) {
-        alert("Invalid address. Please enter a valid Ethereum address.");
+    if (!window.ethereum || !web3) {
+        alert("Please connect to MetaMask first.");
         return;
     }
 
     try {
-        await shrimpFaucetContract.methods.claimTokens().send({ from: addressInput });
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        const account = accounts[0];
+        await shrimpFaucetContract.methods.claimTokens().send({ from: account });
         alert("Tokens claimed successfully!");
     } catch (error) {
-        console.error("Error claiming tokens", error);
+        console.error("Error claiming tokens:", error);
         alert("Failed to claim tokens. See console for details.");
     }
 }
 
+
 async function getFaucetBalance() {
+    if (!shrimpFaucetContract || !shrimpTokenContract) {
+        alert("Contracts are not initialized. Please reload the page or connect MetaMask.");
+        return;
+    }
+
     try {
         const balance = await shrimpTokenContract.methods.balanceOf(faucetAddress).call();
         alert(`Faucet Balance: ${balance} Shrimp Tokens`);
     } catch (error) {
-        console.error("Error getting faucet balance", error);
+        console.error("Error getting faucet balance:", error);
         alert("Failed to get faucet balance. See console for details.");
     }
 }
-
-window.onload = initWeb3;
