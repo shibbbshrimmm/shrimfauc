@@ -570,6 +570,33 @@ const tokenABI = [
 	}
 ];
 
+// Ensure web3 is initialized as soon as an Ethereum provider is detected
+function initWeb3() {
+    if (window.ethereum) {
+        web3 = new Web3(window.ethereum);
+        console.log("Web3 initialized");
+        checkWalletConnection();
+    } else {
+        console.error("Non-Ethereum browser detected. You should consider trying MetaMask!");
+    }
+}
+
+// Check if the wallet is already connected on page load, and set up contracts if it is
+async function checkWalletConnection() {
+    try {
+        const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+        if (accounts.length > 0) {
+            console.log("MetaMask already connected: ", accounts[0]);
+            setupContracts();
+        } else {
+            console.log("No MetaMask account connected. Click 'Connect MetaMask Wallet' to connect.");
+        }
+    } catch (error) {
+        console.error("Error checking MetaMask connection: ", error);
+    }
+}
+
+// Explicitly ask the user to connect their wallet
 async function connectWallet() {
     if (window.ethereum) {
         try {
@@ -590,25 +617,11 @@ async function connectWallet() {
     }
 }
 
-async function initWeb3() {
-    if (window.ethereum) {
-        try {
-            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-            if (accounts.length > 0) {
-                console.log("MetaMask already connected: ", accounts[0]);
-                setupContracts();
-            } else {
-                console.log("No MetaMask account connected. Click 'Connect MetaMask Wallet' to connect.");
-            }
-        } catch (error) {
-            console.error("Error checking MetaMask connection: ", error);
-        }
-    } else {
-        console.error("Non-Ethereum browser detected. Please install MetaMask.");
-    }
-}
-
 function setupContracts() {
+    if (!web3) {
+        console.error("Web3 is not initialized. Cannot set up contracts.");
+        return;
+    }
     shrimpFaucetContract = new web3.eth.Contract(faucetABI, faucetAddress);
     shrimpTokenContract = new web3.eth.Contract(tokenABI, tokenAddress);
     console.log("Contracts initialized.");
