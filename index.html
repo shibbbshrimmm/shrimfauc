@@ -29,8 +29,32 @@
         <div class="actions">
             <h2>Other Actions</h2>
             <button onclick="getFaucetBalance()">Get Faucet Balance</button>
+            <!-- Deposit tokens section -->
+            <div id="deposit-section" style="display: none;"> <!-- Initially hidden -->
+                <h2>Deposit Tokens</h2>
+                <input type="text" id="depositAmount" placeholder="Amount to deposit">
+                <button onclick="depositTokens(document.getElementById('depositAmount').value)">Deposit Tokens</button>
+            </div>
         </div>
     </main>
     <script src="app.js"></script>
+    <script>
+        // This script could be part of your app.js or embedded here
+        document.addEventListener('DOMContentLoaded', async function () {
+            initWeb3();
+            updateUIForOwner();
+        });
+
+        async function updateUIForOwner() {
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            if (accounts.length > 0) {
+                const account = accounts[0];
+                const contractOwner = await shrimpFaucetContract.methods.owner().call();
+                if (account.toLowerCase() === contractOwner.toLowerCase()) {
+                    document.getElementById('deposit-section').style.display = 'block';
+                }
+            }
+        }
+    </script>
 </body>
 </html>
