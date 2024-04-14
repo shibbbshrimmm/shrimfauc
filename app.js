@@ -570,26 +570,41 @@ const tokenABI = [
 	}
 ];
 
-async function initWeb3() {
+async function connectWallet() {
     if (window.ethereum) {
-        web3 = new Web3(window.ethereum);
         try {
-            // Check if accounts are already connected
-            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
             if (accounts.length > 0) {
-                console.log("Account already connected:", accounts[0]);
+                console.log("MetaMask is connected: ", accounts[0]);
                 setupContracts();
+                alert("Wallet connected: " + accounts[0]);
             } else {
-                // Request account access if not already connected
-                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-                console.log("Account connected:", accounts[0]);
-                setupContracts();
+                alert("No accounts found.");
             }
         } catch (error) {
-            console.error("Error connecting to MetaMask:", error);
+            console.error("Error connecting MetaMask: ", error);
+            alert("Failed to connect MetaMask. See console for details.");
         }
     } else {
-        console.error("Non-Ethereum browser detected. You should consider trying MetaMask!");
+        alert("MetaMask is not installed. Please install MetaMask and try again.");
+    }
+}
+
+async function initWeb3() {
+    if (window.ethereum) {
+        try {
+            const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+            if (accounts.length > 0) {
+                console.log("MetaMask already connected: ", accounts[0]);
+                setupContracts();
+            } else {
+                console.log("No MetaMask account connected. Click 'Connect MetaMask Wallet' to connect.");
+            }
+        } catch (error) {
+            console.error("Error checking MetaMask connection: ", error);
+        }
+    } else {
+        console.error("Non-Ethereum browser detected. Please install MetaMask.");
     }
 }
 
@@ -604,9 +619,12 @@ async function claimTokens() {
         alert("Please connect to MetaMask first.");
         return;
     }
-
     try {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts.length === 0) {
+            alert("No MetaMask account connected. Please connect your account.");
+            return;
+        }
         const account = accounts[0];
         await shrimpFaucetContract.methods.claimTokens().send({ from: account });
         alert("Tokens claimed successfully!");
@@ -616,13 +634,11 @@ async function claimTokens() {
     }
 }
 
-
 async function getFaucetBalance() {
     if (!shrimpFaucetContract || !shrimpTokenContract) {
         alert("Contracts are not initialized. Please reload the page or connect MetaMask.");
         return;
     }
-
     try {
         const balance = await shrimpTokenContract.methods.balanceOf(faucetAddress).call();
         alert(`Faucet Balance: ${balance} Shrimp Tokens`);
