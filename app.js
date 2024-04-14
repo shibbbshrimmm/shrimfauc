@@ -578,6 +578,19 @@ function initWeb3() {
     if (window.ethereum) {
         web3 = new Web3(window.ethereum);
         console.log("Web3 initialized: ", web3);
+
+        // Listen for account changes
+        window.ethereum.on('accountsChanged', function (accounts) {
+            // Handle the new accounts, or lack thereof.
+            // "accounts" will always be an array, but it can be empty.
+            if (accounts.length === 0) {
+                console.log('Please connect to MetaMask.');
+            } else {
+                console.log('Account switched:', accounts[0]);
+                setupContracts(); // Re-setup contracts if needed, based on application context
+            }
+        });
+
         checkWalletConnection();
     } else {
         console.error("Non-Ethereum browser detected. You should consider trying MetaMask!");
@@ -633,6 +646,7 @@ async function claimTokens() {
         alert("Please connect to MetaMask first.");
         return;
     }
+
     try {
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
         if (accounts.length === 0) {
@@ -647,6 +661,7 @@ async function claimTokens() {
         alert("Failed to claim tokens. See console for details.");
     }
 }
+
 
 async function getFaucetBalance() {
     if (!shrimpFaucetContract || !shrimpTokenContract) {
