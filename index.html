@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shrimp Faucet</title>
+    <title>$SHRIMPZ Faucet</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/web3/dist/web3.min.js"></script>
 </head>
 <body>
     <header>
-        <h1>Shrimp Faucet</h1>
+        <h1>$SHRIMPZ Faucet</h1>
     </header>
     <main>
         <div class="info">
@@ -19,16 +19,17 @@
             <div class="data-box">Claim Amount: 100 $Shrimpz</div>
             <div class="data-box">Cooldown Period: 24 hours</div>
         </div>
-        <div class="connect-wallet">
-            <button onclick="connectWallet()">Connect MetaMask Wallet</button>
-        </div>
         <div class="data-container">
+            <h2>Connect Wallet</h2>
+            <button onclick="connectWallet()">Connect MetaMask Wallet</button>
+
             <h2>Claim Tokens</h2>
             <button onclick="claimTokens()">Claim Tokens</button>
         </div>
         <div class="actions">
             <h2>Other Actions</h2>
             <button onclick="getFaucetBalance()">Get Faucet Balance</button>
+            <button onclick="getCooldownTimeRemaining()">Get Remaining Cooldown Time</button>
             <!-- Deposit tokens section -->
             <div id="deposit-section" style="display: none;"> <!-- Initially hidden -->
                 <h2>Deposit Tokens</h2>
