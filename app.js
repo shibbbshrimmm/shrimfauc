@@ -570,18 +570,20 @@ const tokenABI = [
 	}
 ];
 
-// Ensure web3 is initialized as soon as an Ethereum provider is detected
+document.addEventListener('DOMContentLoaded', function () {
+    initWeb3();
+});
+
 function initWeb3() {
     if (window.ethereum) {
         web3 = new Web3(window.ethereum);
-        console.log("Web3 initialized");
+        console.log("Web3 initialized: ", web3);
         checkWalletConnection();
     } else {
         console.error("Non-Ethereum browser detected. You should consider trying MetaMask!");
     }
 }
 
-// Check if the wallet is already connected on page load, and set up contracts if it is
 async function checkWalletConnection() {
     try {
         const accounts = await window.ethereum.request({ method: 'eth_accounts' });
@@ -596,7 +598,6 @@ async function checkWalletConnection() {
     }
 }
 
-// Explicitly ask the user to connect their wallet
 async function connectWallet() {
     if (window.ethereum) {
         try {
