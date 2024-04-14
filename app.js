@@ -1,42 +1,9 @@
 let web3;
 let shrimpFaucetContract;
 let shrimpTokenContract;
-const faucetAddress = '0x1ab0F52CAe9ed91fa95e425C6B8E20b889e28544'; // Update with your faucet contract address
+const faucetAddress = '0xDC29C450627336Cb57eB88224f9764df89f47322'; // Update with your faucet contract address
 const tokenAddress = '0x4633841377513350FAF72Efc3c6e6f94F3BDD0F8'; // Update with your token contract address
 const faucetABI = [
-	{
-		"inputs": [],
-		"name": "claimTokens",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "newAmount",
-				"type": "uint256"
-			}
-		],
-		"name": "setClaimAmount",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "newPeriod",
-				"type": "uint256"
-			}
-		],
-		"name": "setCooldownPeriod",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
 	{
 		"inputs": [
 			{
@@ -51,15 +18,40 @@ const faucetABI = [
 	{
 		"inputs": [
 			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
+				"internalType": "address",
+				"name": "target",
+				"type": "address"
 			}
 		],
-		"name": "withdrawTokens",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
+		"name": "AddressEmptyCode",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			}
+		],
+		"name": "AddressInsufficientBalance",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "FailedInnerCall",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "token",
+				"type": "address"
+			}
+		],
+		"name": "SafeERC20FailedOperation",
+		"type": "error"
 	},
 	{
 		"inputs": [],
@@ -76,6 +68,13 @@ const faucetABI = [
 	},
 	{
 		"inputs": [],
+		"name": "claimTokens",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
 		"name": "cooldownPeriod",
 		"outputs": [
 			{
@@ -85,6 +84,19 @@ const faucetABI = [
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "depositTokens",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
@@ -171,16 +183,55 @@ const faucetABI = [
 		"type": "function"
 	},
 	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newAmount",
+				"type": "uint256"
+			}
+		],
+		"name": "setClaimAmount",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "newPeriod",
+				"type": "uint256"
+			}
+		],
+		"name": "setCooldownPeriod",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
 		"inputs": [],
 		"name": "shrimpToken",
 		"outputs": [
 			{
-				"internalType": "contract IShrimpToken",
+				"internalType": "contract IERC20",
 				"name": "",
 				"type": "address"
 			}
 		],
 		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "withdrawTokens",
+		"outputs": [],
+		"stateMutability": "nonpayable",
 		"type": "function"
 	}
 ];
@@ -674,5 +725,39 @@ async function getFaucetBalance() {
     } catch (error) {
         console.error("Error getting faucet balance:", error);
         alert("Failed to get faucet balance. See console for details.");
+    }
+}
+async function depositTokens(amount) {
+    if (!window.ethereum || !web3) {
+        alert("Please connect to MetaMask first.");
+        return;
+    }
+
+    try {
+        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        if (accounts.length === 0) {
+            alert("No MetaMask account connected. Please connect your account.");
+            return;
+        }
+        
+        // Fetch the owner address from the contract
+        const contractOwner = await shrimpFaucetContract.methods.owner().call();
+
+        // Check if the connected account is the owner
+        if (accounts[0].toLowerCase() !== contractOwner.toLowerCase()) {
+            alert("Only the owner can deposit tokens.");
+            return;
+        }
+
+        const depositAmount = web3.utils.toWei(amount, 'ether'); // Converts the amount to wei
+        // First, approve the faucet to withdraw the tokens
+        await shrimpTokenContract.methods.approve(faucetAddress, depositAmount).send({ from: accounts[0] });
+
+        // Then deposit the tokens into the faucet
+        await shrimpFaucetContract.methods.depositTokens(depositAmount).send({ from: accounts[0] });
+        alert("Tokens deposited successfully!");
+    } catch (error) {
+        console.error("Error depositing tokens:", error);
+        alert("Failed to deposit tokens. See console for details.");
     }
 }
